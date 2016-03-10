@@ -1,0 +1,66 @@
+// This file is part of www.nand2tetris.org
+// and the book "The Elements of Computing Systems"
+// by Nisan and Schocken, MIT Press.
+// File name: projects/03/b/RAM4K.hdl
+
+/**
+ * Memory of 4K registers, each 16 bit-wide. Out holds the value
+ * stored at the memory location specified by address. If load==1, then 
+ * the in value is loaded into the memory location specified by address 
+ * (the loaded value will be emitted to out from the next time step onward).
+ */
+
+CHIP RAM4K {
+    IN in[16], load, address[12];
+    OUT out[16];
+
+    PARTS:
+    // Put your code here:
+    // Put your code here:
+    Not(in = address[9], out = notAddr0);
+    Not(in = address[10], out = notAddr1);
+    Not(in = address[11], out = notAddr2);
+    // determine which RAM8
+    And(a = notAddr0, b = notAddr1, out = notAddr0notAddr1);
+    And(a = notAddr2, b = notAddr0notAddr1, out = addr000);
+    //
+    And(a = notAddr2, b = notAddr1, out = notAddr2notAddr1);
+    And(a = notAddr2notAddr1, b = address[9], out = addr001);
+    //
+    And(a = notAddr0, b = address[10], out = notAddr0Addr1);
+    And(a = notAddr2, b = notAddr0Addr1, out = addr010);
+    //
+    And(a = address[9], b = address[10], out = Addr1Addr0);
+    And(a = notAddr2, b = Addr1Addr0, out = addr011);
+    // 
+    And(a = address[11], b = notAddr1, out = Addr2notAddr1);
+    And(a = Addr2notAddr1, b = notAddr0, out = addr100);
+    //
+    And(a = Addr2notAddr1, b = address[9], out = addr101);
+    //
+    And(a = notAddr0Addr1, b = address[11], out = addr110);
+    //
+    And(a = Addr1Addr0, b = address[11], out = addr111);
+    
+    // loadi
+    And(a = load , b = addr000, out = load1);
+    And(a = load , b = addr001, out = load2);
+    And(a = load , b = addr010, out = load3);
+    And(a = load , b = addr011, out = load4);
+    And(a = load , b = addr100, out = load5);
+    And(a = load , b = addr101, out = load6);
+    And(a = load , b = addr110, out = load7);
+    And(a = load , b = addr111, out = load8);
+        
+    // Register
+    RAM512(in=in, load=load2, address = address[0..8], out=bb); 
+    RAM512(in=in, load=load3, address = address[0..8], out=cc); 
+    RAM512(in=in, load=load1, address = address[0..8], out=aa); 
+    RAM512(in=in, load=load4, address = address[0..8], out=dd); 
+    RAM512(in=in, load=load5, address = address[0..8], out=ee); 
+    RAM512(in=in, load=load6, address = address[0..8], out=ff); 
+    RAM512(in=in, load=load7, address = address[0..8], out=gg); 
+    RAM512(in=in, load=load8, address = address[0..8], out=hh);
+    
+    Mux8Way16(a=aa,b=bb,c=cc,d=dd,e=ee,f=ff,g=gg,h=hh,sel=address[9..11],out=out);
+}

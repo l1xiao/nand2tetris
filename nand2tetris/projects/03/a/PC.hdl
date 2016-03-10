@@ -1,0 +1,48 @@
+// This file is part of www.nand2tetris.org
+// and the book "The Elements of Computing Systems"
+// by Nisan and Schocken, MIT Press.
+// File name: projects/03/a/PC.hdl
+
+/**
+ * A 16-bit counter with load and reset control bits.
+ * if      (reset[t] == 1) out[t+1] = 0
+ * else if (load[t] == 1)  out[t+1] = in[t]
+ * else if (inc[t] == 1)   out[t+1] = out[t] + 1  (integer addition)
+ * else                    out[t+1] = out[t]
+ */
+
+CHIP PC {
+    IN in[16],load,inc,reset;
+    OUT out[16];
+
+    PARTS:
+    // Put your code here:
+    Not(in = load, out = Notload);
+    Not(in = inc, out = Notinc);
+    Not(in = reset, out = Notreset);
+
+    // 0 and 1
+    And(a = Notreset, b = load, out = Notresetload);
+    // 0 and 0 and 1
+    And(a = Notreset, b = Notload, out = NotresetNotload);
+    And(a = NotresetNotload, b = inc, out = NotresetNotloadinc);
+    // 0 and 0 and 0 and anyway
+    And(a = NotresetNotload, b = Notinc, out = NotresetNotloadNotinc);
+    
+    // if reset=1，out=0
+    Mux16(a = false, b = false, sel = reset, out = out1);
+    // if load=1,reset=0，then out=in
+    Mux16(a = false, b = in, sel = Notresetload, out = out2);
+    // if load=0,reset=0,inc=1, then out++
+    Register(in = newin, load = true, out = oldout);
+    Inc16(in = oldout, out = inc1);
+    Mux16(a = false, b = inc1, sel = NotresetNotloadinc, out = out3);
+    // if load=0,reset=0,inc=0
+    Mux16(a = false, b = oldout, sel = NotresetNotloadNotinc, out = out4);
+    
+    Or16(a = out1, b = out2, out = out12);
+    Or16(a = out3, b = out4, out = out34);
+    Or16(a = out12, b = out34, out = newin);
+    
+    And16(a = oldout, b = true, out = out);
+}
