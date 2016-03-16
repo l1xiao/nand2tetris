@@ -24,4 +24,9 @@ CHIP Bit {
     DFF(in=p1, out=p);
     DFF(in=q1, out=q);
     Xor(a=p, b=q, out=out);    
+    
+    //
+    // Mux(a = in, b = oldout, sel = load, out = newin);
+    // DFF(in = newin, out = oldout);
+    // And(a = true, b = oldout, out = out);
 }
