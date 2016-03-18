@@ -40,4 +40,30 @@ CHIP CPU {
 
     PARTS:
     // Put your code here:
+    // decode
+    Not(in = instruction[15], out = c_A);
+    And(a = true, b = instruction[5], out = c_Mux1);
+    And(a = true, b = instruction[4], out = c_D);
+    And(a = true, b = instruction[3], out = c_M);
+    And(a = true, b = instruction[12], out = c_Mux2);
+    
+    Not(in = instruction[0], out = notj3);
+    Not(in = instruction[1], out = notj2);
+    Not(in = instruction[2], out = notj1);
+    Mux8Way16(a = );
+    
+    // left and up part
+    Mux16(a = outOfALU, b = instruction, sel = c_Mux1, out = inputOfA);
+    ARegister(in = inputOfA, load = c_A, out = outOfA);
+    
+    // right and up part
+    DRegister(in = outOfALU, load = c_D, out = outOfD);
+    Mux16(a = outOfA, b = inM, sel = c_Mux2, out = AorM);
+    ALU(x = outOfD, y = AorM, zx = instruction[11], nx = instruction[10], zy = instruction[9], ny = instruction[8], f = instruction[7], no = instruction[6], out = outOfALU, zr = isZr, ng = isNg);
+    And(a = outOfALU, b = true, out = outM);
+    Not(in = isNg, out = notNg);
+    Not(in = isZr, out = notZr);
+    And(a = notNg, b = notZr, out = isPositive);
+    // PC
+    PC(in = outOfA, load = doJump, inc = , reset = reset, out = pc);    
 }
