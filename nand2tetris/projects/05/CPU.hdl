@@ -41,29 +41,48 @@ CHIP CPU {
     PARTS:
     // Put your code here:
     // decode
-    Not(in = instruction[15], out = c_A);
-    And(a = true, b = instruction[5], out = c_Mux1);
-    And(a = true, b = instruction[4], out = c_D);
-    And(a = true, b = instruction[3], out = c_M);
-    And(a = true, b = instruction[12], out = c_Mux2);
-    
-    Not(in = instruction[0], out = notj3);
-    Not(in = instruction[1], out = notj2);
-    Not(in = instruction[2], out = notj1);
-    Mux8Way16(a = );
+    Not(in = instruction[15], out = cA1);
+    And(a = instruction[5], b = instruction[15], out = cA2);
+    Or(a = cA1, b = cA2, out = cA);
+    And(a = instruction[15], b = instruction[5], out = cMux1);
+    And(a = instruction[15], b = instruction[4], out = cD);
+    And(a=instruction[15], b=instruction[3], out=writeM);
+
+    //And(a = true, b = instruction[3], out = writeM);
+    And(a = true, b = instruction[12], out = cMux2);
     
     // left and up part
-    Mux16(a = outOfALU, b = instruction, sel = c_Mux1, out = inputOfA);
-    ARegister(in = inputOfA, load = c_A, out = outOfA);
-    
+    Mux16(a = instruction, b = outOfALU, sel = cMux1, out = inputOfA);
+    ARegister(in = inputOfA, load = cA, out = outOfA);
+    And16(a = outOfA, b = true, out[0..14] = addressM);
+
     // right and up part
-    DRegister(in = outOfALU, load = c_D, out = outOfD);
-    Mux16(a = outOfA, b = inM, sel = c_Mux2, out = AorM);
+    DRegister(in = outOfALU, load = cD, out = outOfD);
+    Mux16(a = outOfA, b = inM, sel = cMux2, out = AorM);
     ALU(x = outOfD, y = AorM, zx = instruction[11], nx = instruction[10], zy = instruction[9], ny = instruction[8], f = instruction[7], no = instruction[6], out = outOfALU, zr = isZr, ng = isNg);
-    And(a = outOfALU, b = true, out = outM);
+    
+    // set jump flag
+    And16(a = outOfALU, b = true, out = outM);
     Not(in = isNg, out = notNg);
     Not(in = isZr, out = notZr);
     And(a = notNg, b = notZr, out = isPositive);
+    Not(in = isPositive, out = notPositive);
+    
     // PC
-    PC(in = outOfA, load = doJump, inc = , reset = reset, out = pc);    
+    Mux8Way16(
+                a = false, 
+                b[0] = isPositive, b[1..15] = false, 
+                c[0] = isZr, c[1..15] = false, 
+                d[0] = notNg, d[1..15] = false, 
+                e[0] = isNg, e[1..15] = false, 
+                f[0] = notZr, f[1..15] = false, 
+                g[0] = notPositive, g[1..15] = false, 
+                h = true, 
+                sel = instruction[0..2], 
+                out[0] = jump, 
+                out[1..15] = he
+              );
+    And(a = jump, b = instruction[15], out = doJump);
+    Not(in = doJump, out = noJump);
+    PC(in = outOfA, load = doJump, inc = noJump, reset = reset, out[0..14] = pc);    
 }
