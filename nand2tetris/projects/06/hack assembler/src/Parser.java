@@ -21,20 +21,27 @@ class Parser {
     //
     Parser(ArrayList<String> instructions) {
         this.instructions = instructions;
+        advance();
     }
 
     public boolean hasMoreCommands() {
-        return !(index >= instructions.size());
+        return index != instructions.size() - 1;
     }
 
     public void advance() {
-        boolean ignore = false;
-        while (!ignore) {
+        boolean ignore = true;
+        while (ignore) {
             index++;
             String temp = instructions.get(index).replaceAll(" ", "");
             // is comment?
             if (temp.contains("//")) {
-                ignore = true;
+                if (temp.indexOf("//") == 0) {
+                    ignore = true;
+                } else {
+                    temp = temp.split("//")[0];
+                    ignore = false;
+                    currentLine = temp;
+                }
             }
             // all white space?
             else if (temp.length() == 0) {
@@ -61,8 +68,10 @@ class Parser {
     }
 
     public String symbol() {
-        if (commandType() == COMMAND.A_COMMAND || commandType() == COMMAND.L_COMMAND) {
+        if (commandType() == COMMAND.A_COMMAND) {
             return currentLine.substring(1);
+        } else if (commandType() == COMMAND.L_COMMAND) {
+            return currentLine.replace("(", "").replace(")", "");
         }
         return "";
     }
@@ -96,5 +105,7 @@ class Parser {
         }
         return "";
     }
-
+    public String getCurrentLine() {
+        return currentLine.toString();
+    }
 }

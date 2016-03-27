@@ -10,7 +10,7 @@ public class HackAssembler {
     private Parser parser;
     private SymbolTable symbolTable;
 
-    public void HackAssembler(String path) {
+    HackAssembler(String path) {
         // read file
         readFile(path);
         // init parser
@@ -37,6 +37,7 @@ public class HackAssembler {
     public void resetParser(ArrayList<String> instructions) {
         parser = new Parser(instructions);
     }
+
     public void resetParser() {
         parser = new Parser(instructions);
     }
@@ -51,45 +52,62 @@ public class HackAssembler {
     }
 
     public static void main(String args[]) {
-        HackAssembler ha = new HackAssembler();
+        String fileName = "src/Add.asm";
+        HackAssembler ha = new HackAssembler(fileName);
         SymbolTable st = ha.symbolTable;
         ArrayList<String> instructions = new ArrayList<>();
         // first pass
         Parser parser = ha.parser;
         int lineNumber = 0;
-        while (parser.hasMoreCommands()) {
+        while (true) {
+            String info = parser.getCurrentLine();
             if (parser.commandType() == Parser.COMMAND.L_COMMAND) {
-                st.addEntry(parser.symbol(), lineNumber + 1);
+                String symbol = parser.symbol();
+                st.addEntry(parser.symbol(), lineNumber);
             } else {
                 lineNumber++;
             }
-            parser.advance();
+            if (parser.hasMoreCommands()) {
+                parser.advance();
+            } else {
+                break;
+            }
         }
         // second pass
         ha.resetParser();
         parser = ha.parser;
         lineNumber = 0;
         int n = 16;
-        while (parser.hasMoreCommands()) {
+        while (true) {
             // 这里是否要精简？精简容易debug
             String currentCommand = null;
             if (parser.commandType() == Parser.COMMAND.A_COMMAND) {
+                String addr = null;
                 // is a number
                 if (ha.isInteger(parser.symbol())) {
-                    continue;
+                    addr = parser.symbol();
                 }
                 // if this is a variable
-                if (!st.contains(parser.symbol())) {
+                else if (!st.contains(parser.symbol())) {
+                    String info = parser.symbol();
                     st.addEntry(parser.symbol(), n++);
+                    addr = ((Integer) st.GetAddress(parser.symbol())).toString();
+                } else {
+                    addr = ((Integer) st.GetAddress(parser.symbol())).toString();
                 }
-                int addr = st.GetAddress(parser.symbol());
-
-//                currentCommand = String.format("%16s", Integer.toBinaryString(addr)).replace(' ', '0');
+                currentCommand = "@" + addr;
             } else if (parser.commandType() == Parser.COMMAND.C_COMMAND) {
-                currentCommand = parser.dest() + parser.comp() + parser.jump();
+                if (parser.dest() != "") currentCommand = parser.dest() + "=" + parser.comp();
+                else currentCommand = parser.comp();
+                if (parser.jump() != "") currentCommand += ";" + parser.jump();
             }
             if (currentCommand != null) {
                 instructions.add(currentCommand);
+            }
+            if (parser.hasMoreCommands()) {
+                parser.advance();
+            } else {
+                break;
             }
         }
         // main loop
@@ -98,16 +116,35 @@ public class HackAssembler {
         ArrayList<String> machines = new ArrayList<>();
         Code code = new Code();
         String machine = null;
-        while (parser.hasMoreCommands()) {
+        while (true) {
             if (parser.commandType() == Parser.COMMAND.A_COMMAND) {
                 machine = String.format("%16s", Integer.toBinaryString(Integer.parseInt(parser.symbol()))).replace(' ', '0');
             } else if (parser.commandType() == Parser.COMMAND.C_COMMAND) {
-                machine = "111" + code.dest(parser.dest()) + code.comp(parser.comp()) + code.jump(parser.jump());
+                machine = "111" + code.comp(parser.comp()) + code.dest(parser.dest()) + code.jump(parser.jump());
             }
             machines.add(machine);
-            parser.advance();
+            if (parser.hasMoreCommands()) {
+                parser.advance();
+            } else {
+                break;
+            }
         }
-        
+        String newName = fileName.replace("asm", "hack");
+        File writename = new File(newName); // 相对路径，如果没有则要建立一个新的output。txt文件
+        try {
+            writename.createNewFile();
+            BufferedWriter out = new BufferedWriter(new FileWriter(writename));
+            for (int i = 0; i < machines.size(); i++) {
+                out.write(machines.get(i) + "\r\n");
+            }
+            out.flush();
+            out.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+
+
     }
 
 }
