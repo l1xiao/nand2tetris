@@ -7,6 +7,7 @@ public class Code {
     HashMap<String, String> dest;
     HashMap<String, String> comp;
     HashMap<String, String> jump;
+
     Code() {
         // dest
         dest = new HashMap<>();
@@ -60,12 +61,15 @@ public class Code {
         comp.put("D&M", "1000000");
         comp.put("D|M", "1010101");
     }
+
     public String dest(String mnemonic) {
         return dest.get(mnemonic);
     }
+
     public String jump(String mnemonic) {
         return jump.get(mnemonic);
     }
+
     public String comp(String mnemonic) {
         return comp.get(mnemonic);
     }

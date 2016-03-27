@@ -64,7 +64,7 @@ class Parser {
         if (commandType() == COMMAND.A_COMMAND || commandType() == COMMAND.L_COMMAND) {
             return currentLine.substring(1);
         }
-        return null;
+        return "";
     }
 
     public String dest() {
@@ -72,7 +72,7 @@ class Parser {
             String[] arr = currentLine.split("=");
             return arr[0];
         }
-        return null;
+        return "";
     }
 
     public String comp() {
@@ -86,7 +86,7 @@ class Parser {
             }
             return temp;
         }
-        return null;
+        return "";
     }
 
     public String jump() {
@@ -94,7 +94,7 @@ class Parser {
             String[] arr = currentLine.split(";");
             return arr[1];
         }
-        return null;
+        return "";
     }
 
 }
